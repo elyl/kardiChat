@@ -20,7 +20,7 @@ public class User
 	return (this.port);
     }
 
-    public InetAddress getIp()
+    public InetAddress getAddress()
     {
 	return (this.ip);
     }

@@ -3,17 +3,12 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Iterator;
 
 public class Server implements Runnable
 {
     private DatagramSocket		ds;
     private DatagramPacket		dp_in;
-    private DatagramPacket		dp_out;
-    private List<Toto>		iplist;
-    private Map<InetAddress, Room>	m;
+    private Map<String, User>		m;
     Room	room;
 
     public Server() throws Exception
@@ -21,9 +16,7 @@ public class Server implements Runnable
 	System.out.print("Initialisation du serveur....");
 	ds = new DatagramSocket(9876);
 	dp_in = new DatagramPacket(new byte[1024], 1024);
-	dp_out = new DatagramPacket(new byte[0], 0);
-	iplist = new LinkedList<Toto>();
-	m = new HashMap<InetAddress, Room>();
+	m = new HashMap<String, User>();
 	room = new Room("Mouvements extends Plateau", this);
 	System.out.println("OK");
     }
@@ -32,9 +25,9 @@ public class Server implements Runnable
     {
 	while (true)
 	    {
-		System.out.print("En attente de reception....");
+		System.out.println("En attente de reception....");
 		ds.receive(dp_in);
-		System.out.println("OK");
+		System.out.println("Paquet reçu");
 		new Thread(this).start();
 	    }
     }
@@ -42,14 +35,17 @@ public class Server implements Runnable
     public void run()
     {
 	InetAddress	adr;
+	String		usr;
 
 	try
 	    {
 		System.out.println("Traitement du paquet");
 		adr = dp_in.getAddress();
-		if (!iplist.contains(new Toto(dp_in.getPort(), adr)))
+		usr = new String(adr.toString() + ":" + dp_in.getPort());
+		if (!m.containsKey(usr))
 		    log();
-		sendAll(new String(dp_in.getData(), dp_in.getOffset(), dp_in.getLength()));
+		m.get(usr).getRoom().sendAll(new String(dp_in.getData(), dp_in.getOffset(), dp_in.getLength()));
+		System.out.println("Traitement termine");
 		return;
 	    }
 	catch (Exception e)
@@ -58,38 +54,16 @@ public class Server implements Runnable
 	    }
     }
 
-    public void sendAll(String msg) throws Exception
-    {
-	Iterator<User>	itr;
-
-	itr = m.get(dp_in.getAddress()).getUserList().iterator();
-	while (itr.hasNext())
-	    {
-		send(msg, itr.next());
-	    }
-    }
-
-    public void send(String msg, User usr) throws Exception
-    {
-	System.out.print("Préparation de l'envoi....");
-	dp_out.setData(msg.getBytes());
-	dp_out.setLength(msg.length());
-	dp_out.setPort(usr.getPort());
-	dp_out.setAddress(usr.getIp());
-	ds.send(dp_out);
-	System.out.println("OK");
-    }
-
     public void log()
     {
 	User	usr;
 
-	System.out.print("Enregistrement du nouvel utilisateur....");
-	iplist.add(new Toto(dp_in.getPort(), dp_in.getAddress()));
+	System.out.println("Enregistrement du nouvel utilisateur....");
 	usr = new User(dp_in.getPort(), dp_in.getAddress(), dp_in.getAddress().toString(), room);
-	m.put(dp_in.getAddress(), room);
+	m.put(new String(dp_in.getAddress().toString() + ":" + dp_in.getPort()), usr);
+	System.out.println(m);
 	room.addClient(usr);
-	System.out.println("OK");
+	System.out.println("Enregistrement termine");
     }
 
     public static void main(String args[])

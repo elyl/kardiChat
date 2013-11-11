@@ -6,7 +6,8 @@ import java.util.Scanner;
 public class Client implements Runnable
 {
     private DatagramSocket	ds;
-    private DatagramPacket	dp;
+    private DatagramPacket	dp_in;
+    private DatagramPacket	dp_out;
     private String		pseudo;
 
     public Client() throws Exception
@@ -17,28 +18,29 @@ public class Client implements Runnable
     public Client(String serverAddress, int port) throws Exception
     {
 	ds = new DatagramSocket();
-	dp = new DatagramPacket(new byte[0], 0);
-	dp.setAddress(InetAddress.getByName(serverAddress));
-	dp.setPort(port);
+	dp_in = new DatagramPacket(new byte[0], 0);
+	dp_out = new DatagramPacket(new byte[0], 0);
+	dp_out.setAddress(InetAddress.getByName(serverAddress));
+	dp_out.setPort(port);
     }
 
     public void send(String s) throws Exception
     {
-	dp.setData(s.getBytes());
-	dp.setLength((s.getBytes().length < 1024) ? s.getBytes().length : 1024);
+	dp_out.setData(s.getBytes());
+	dp_out.setLength((s.getBytes().length < 1024) ? s.getBytes().length : 1024);
 	System.out.print("Envoi en cours....");
-	ds.send(dp);
+	ds.send(dp_out);
 	System.out.println("OK");
     }
 
     public String receive(DatagramSocket s) throws Exception
     {
-	dp.setData(new byte[1024]);
-	dp.setLength(1024);
+	dp_in.setData(new byte[1024]);
+	dp_in.setLength(1024);
 	System.out.print("En attente de reception...");
-	ds.receive(dp);
+	ds.receive(dp_in);
 	System.out.println("OK");
-	return (new String(dp.getData(), dp.getOffset(), dp.getLength()));
+	return (new String(dp_in.getData(), dp_in.getOffset(), dp_in.getLength()));
     }
 
     public void run()
