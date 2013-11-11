@@ -10,8 +10,9 @@ import java.util.Iterator;
 public class Server implements Runnable
 {
     private DatagramSocket		ds;
-    private DatagramPacket		dp;
-    private List<InetAddress>		iplist;
+    private DatagramPacket		dp_in;
+    private DatagramPacket		dp_out;
+    private List<Toto>		iplist;
     private Map<InetAddress, Room>	m;
     Room	room;
 
@@ -19,8 +20,9 @@ public class Server implements Runnable
     {
 	System.out.print("Initialisation du serveur....");
 	ds = new DatagramSocket(9876);
-	dp = new DatagramPacket(new byte[1024], 1024);
-	iplist = new LinkedList<InetAddress>();
+	dp_in = new DatagramPacket(new byte[1024], 1024);
+	dp_out = new DatagramPacket(new byte[0], 0);
+	iplist = new LinkedList<Toto>();
 	m = new HashMap<InetAddress, Room>();
 	room = new Room("Mouvements extends Plateau", this);
 	System.out.println("OK");
@@ -31,7 +33,7 @@ public class Server implements Runnable
 	while (true)
 	    {
 		System.out.print("En attente de reception....");
-		ds.receive(dp);
+		ds.receive(dp_in);
 		System.out.println("OK");
 		new Thread(this).start();
 	    }
@@ -44,10 +46,10 @@ public class Server implements Runnable
 	try
 	    {
 		System.out.println("Traitement du paquet");
-		adr = dp.getAddress();
-		if (!iplist.contains(adr))
+		adr = dp_in.getAddress();
+		if (!iplist.contains(new Toto(dp_in.getPort(), adr)))
 		    log();
-		sendAll(new String(dp.getData(), dp.getOffset(), dp.getLength()));
+		sendAll(new String(dp_in.getData(), dp_in.getOffset(), dp_in.getLength()));
 		return;
 	    }
 	catch (Exception e)
@@ -60,7 +62,7 @@ public class Server implements Runnable
     {
 	Iterator<User>	itr;
 
-	itr = m.get(dp.getAddress()).getUserList().iterator();
+	itr = m.get(dp_in.getAddress()).getUserList().iterator();
 	while (itr.hasNext())
 	    {
 		send(msg, itr.next());
@@ -69,12 +71,12 @@ public class Server implements Runnable
 
     public void send(String msg, User usr) throws Exception
     {
-	System.out.print("Préparation de l'envoie....");
-	dp.setData(msg.getBytes());
-	dp.setLength(msg.length());
-	dp.setPort(usr.getPort());
-	dp.setAddress(usr.getIp());
-	ds.send(dp);
+	System.out.print("Préparation de l'envoi....");
+	dp_out.setData(msg.getBytes());
+	dp_out.setLength(msg.length());
+	dp_out.setPort(usr.getPort());
+	dp_out.setAddress(usr.getIp());
+	ds.send(dp_out);
 	System.out.println("OK");
     }
 
@@ -83,9 +85,9 @@ public class Server implements Runnable
 	User	usr;
 
 	System.out.print("Enregistrement du nouvel utilisateur....");
-	iplist.add(dp.getAddress());
-	usr = new User(dp.getPort(), dp.getAddress(), dp.getAddress().toString(), room);
-	m.put(dp.getAddress(), room);
+	iplist.add(new Toto(dp_in.getPort(), dp_in.getAddress()));
+	usr = new User(dp_in.getPort(), dp_in.getAddress(), dp_in.getAddress().toString(), room);
+	m.put(dp_in.getAddress(), room);
 	room.addClient(usr);
 	System.out.println("OK");
     }
