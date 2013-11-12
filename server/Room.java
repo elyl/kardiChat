@@ -1,24 +1,18 @@
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Iterator;
-import java.net.DatagramSocket;
-import java.net.DatagramPacket;
 
 public class Room
 {
     private List<User>		ulist;
     private String		name;
     private Server		srv;
-    private DatagramPacket	dp_out;
-    private DatagramSocket	ds;
 
     public Room(String name, Server srv) throws Exception
     {
 	this.name = name;
 	this.srv = srv;
 	this.ulist = new LinkedList<User>();
-	this.dp_out = new DatagramPacket(new byte[0], 0);
-	this.ds = new DatagramSocket();
     }
 
     public void sendAll(String msg) throws Exception
@@ -27,18 +21,7 @@ public class Room
 
 	itr = ulist.iterator();
 	while (itr.hasNext())
-	    send(itr.next(), msg);
-    }
-
-    public void send(User usr, String msg) throws Exception
-    {
-	System.out.println("Préparation de l'envoi...");
-	dp_out.setData(msg.getBytes());
-	dp_out.setLength(msg.length());
-	dp_out.setPort(usr.getPort());
-	dp_out.setAddress(usr.getAddress());
-	ds.send(dp_out);
-	System.out.println("Envoi termine");
+	   srv.send(itr.next(), msg);
     }
 
     public List<User> getUserList()
@@ -46,20 +29,30 @@ public class Room
 	return (this.ulist);
     }
 
-    public void addClient(User client)
+    public void addClient(User client) throws Exception
     {
 	this.ulist.add(client);
 	client.setRoom(this);
+	sendAll(client.toString() + " joined the room");
     }
 
-    public void delClient(User client)
+    public void delClient(User client) throws Exception
     {
 	this.ulist.remove(client);
 	client.setRoom(null);
+	sendAll(client.toString() + " left the room");
     }
 
     public String toString()
     {
 	return (name);
+    }
+
+    public boolean equels(Object o)
+    {
+	Room	r;
+
+	r = (Room)o;
+	return (r.name == name);
     }
 }

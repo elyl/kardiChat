@@ -44,4 +44,9 @@ public class User
     {
 	this.pseudo = pseudo;
     }
+
+    public String toString()
+    {
+	return (this.pseudo);
+    }
 }
