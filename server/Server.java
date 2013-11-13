@@ -82,15 +82,24 @@ public class Server implements Runnable
     public void command(String msg, User usr) throws Exception
     {
 
-	if (msg.substring(0, 5).equals("/join"))
+	if (msg.length() > 7 && msg.substring(0, 5).equals("/join"))
 	    {
 		if (roomList.contains(new Room(msg.substring(7), null)))
 		    {
 			usr.getRoom().delClient(usr);
-			roomList.get(roomList.indexOf(new Room(msg.substring(7), null))).addClient(usr);
+			roomList.get(roomList.indexOf(new Room(msg.substring(6), null))).addClient(usr);
 		    }
 		else
 		    send(usr, "This room does not seem to exist. Type /roomlist for a complete list of the different existing rooms");
+	    }
+	else if (msg.length() > 7 && msg.substring(0, 5).equals("/nick"))
+	    {
+		usr.setPseudo(msg.substring(6));
+		send(usr, "Nickname changed");
+	    }
+	else if (msg.equals("/list"))
+	    {
+		send(usr, usr.getRoom().getUserList().toString());
 	    }
 	else if (msg.equals("/help"))
 	    {
