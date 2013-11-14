@@ -48,11 +48,13 @@ public class Room
 	return (name);
     }
 
-    public boolean equels(Object o)
+    public boolean equals(Object o)
     {
 	Room	r;
 
+	System.out.println("CHEWBACA!");
 	r = (Room)o;
-	return (r.name == name);
+	System.out.println(r.name == name);
+	return (r.name.equals(name));
     }
 }

@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.FileReader;
+import java.io.File;
 
 public class Server implements Runnable
 {
@@ -32,7 +36,8 @@ public class Server implements Runnable
 		System.out.println("En attente de reception....");
 		ds.receive(dp_in);
 		System.out.println("Paquet reçu");
-		new Thread(this).start();
+		//new Thread(this).start();
+		run();
 	    }
     }
 
@@ -47,8 +52,11 @@ public class Server implements Runnable
 	    {
 		System.out.println("Traitement du paquet");
 		adr = dp_in.getAddress();
+		System.out.println("Etape -1");
 		uid = new String(adr.toString() + ":" + dp_in.getPort());
+		System.out.println("Etape 0");
 		msg = new String(dp_in.getData(), dp_in.getOffset(), dp_in.getLength());
+		System.out.println("Etape 1 : " + msg);
 		if (msg.length() == 0)
 		    return;
 		if (!m.containsKey(uid))
@@ -57,7 +65,7 @@ public class Server implements Runnable
 		if (msg.charAt(0) == '/')
 		    command(msg, usr);
 		else
-		    usr.getRoom().sendAll(new String(dp_in.getData(), dp_in.getOffset(), dp_in.getLength()));
+		    usr.getRoom().sendAll(usr.getPseudo() + ": " + new String(dp_in.getData(), dp_in.getOffset(), dp_in.getLength()));
 		System.out.println("Traitement termine");
 		return;
 	    }
@@ -81,10 +89,10 @@ public class Server implements Runnable
 
     public void command(String msg, User usr) throws Exception
     {
-
-	if (msg.length() > 7 && msg.substring(0, 5).equals("/join"))
+	if (msg.length() > 6 && msg.substring(0, 5).equals("/join"))
 	    {
-		if (roomList.contains(new Room(msg.substring(7), null)))
+		System.out.println(msg.substring(6));
+		if (roomList.contains(new Room(msg.substring(6), null)))
 		    {
 			usr.getRoom().delClient(usr);
 			roomList.get(roomList.indexOf(new Room(msg.substring(6), null))).addClient(usr);
@@ -97,23 +105,51 @@ public class Server implements Runnable
 		usr.setPseudo(msg.substring(6));
 		send(usr, "Nickname changed");
 	    }
-	else if (msg.equals("/list"))
+	else if (msg.length() > 8 && msg.substring(0, 7).equals("/create"))
 	    {
-		send(usr, usr.getRoom().getUserList().toString());
+		if (roomList.indexOf(new Room(msg.substring(8), null)) == -1)
+		    {
+			roomList.add(new Room(msg.substring(8), this));
+			send(usr, "Room " + msg.substring(8) + " created");
+		    }
+		else
+		    send(usr, "This room already exists");
 	    }
+	else if (msg.equals("/list"))
+	    send(usr, usr.getRoom().getUserList().toString());
+	else if (msg.equals("/roomlist"))
+	    send(usr, roomList.toString());
+	else if (msg.equals("/poney"))
+	    poney(usr);
 	else if (msg.equals("/help"))
 	    {
 		send(usr,	"Alviable commands:\n" +
+				"/nick <name> : Change your nickname to <name>\n" +
 				"/join <romm name> : join the specified room \n" +
 				"/roomlist : display the list of existing rooms\n" +
 				"/list : display all users curently logged in your room\n" +
 				"/create <room name> : create and join the specified room\n" +
 				"/leave : Leave the currend room\n" +
+				"/ban <name> : ban <name> from the chat\n" +
 				"/poney : display a wonderful poney\n" +
 				"/help : display this list of commands");
 	    }
 	else
 	    send(usr, "Command not found, type /help for a list of valid commands");
+    }
+
+    public void poney(User usr) throws Exception
+    {
+	String		line;
+	BufferedReader	r;
+
+	r = new BufferedReader(new FileReader(new File("rainbow dash.txt")));
+	line = r.readLine();
+	while (line != null)
+	    {
+		line = r.readLine();
+		send(usr, line);
+	    }
     }
 
     public void send(User usr, String msg) throws Exception
