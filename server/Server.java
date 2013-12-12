@@ -14,9 +14,9 @@ public class Server implements Runnable
 {
     private DatagramSocket		ds;
     private DatagramPacket		dp_in;
-    private Map<String, User>		m;
-    private List<Room>			roomList;
-    Room	room;
+    private Map<String, User>		m;	/*  Liste des utlisateurs actuellement connectes, identifies par le toString() de InetAddress */
+    private List<Room>			roomList;	/* liste des salons de discussion */
+    Room	room;			/* Salon par defaut, devait etre change*/
 
     public Server() throws Exception
     {
@@ -24,7 +24,7 @@ public class Server implements Runnable
 	ds = new DatagramSocket(9876);
 	dp_in = new DatagramPacket(new byte[1024], 1024);
 	m = new HashMap<String, User>();
-	roomList = new LinkedList<Room>();
+	roomList = new LinkedList<Room>();	/* Liste chainee, aucune recherche par index donc aucun avantage a utliser une ArrayList */
 	room = new Room("Mouvements extends Plateau", this);
 	System.out.println("OK");
     }
@@ -87,6 +87,9 @@ public class Server implements Runnable
 	System.out.println("Enregistrement termine");
     }
 
+	/* Gere les commandes serveur:
+	Aucune restriction d'utilisation, pas de notion de privilege(j'aurai du)
+	Presente peut etre d'horibles fautes, a ete ecrit tard dans la nuit */
     public void command(String msg, User usr) throws Exception
     {
 	if (msg.length() > 6 && msg.substring(0, 5).equals("/join"))
@@ -131,13 +134,14 @@ public class Server implements Runnable
 				"/create <room name> : create and join the specified room\n" +
 				"/leave : Leave the currend room\n" +
 				"/ban <name> : ban <name> from the chat\n" +
-				"/poney : display a wonderful poney\n" +
+				"/pony : display a wonderful pony\n" +
 				"/help : display this list of commands");
 	    }
 	else
 	    send(usr, "Command not found, type /help for a list of valid commands");
     }
 
+	/* Sert uniquement pour /pony, lit le fichier et l'envoi au client (Totalement innutile)*/
     public void poney(User usr) throws Exception
     {
 	String		line;
