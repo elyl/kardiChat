@@ -8,7 +8,7 @@ public class Client implements Runnable
     private DatagramSocket	ds;
     private DatagramPacket	dp_in;
     private DatagramPacket	dp_out;
-    private String		pseudo;
+    private String		pseudo; // Ne sert pas, devait servir
 
     public Client() throws Exception
     {
@@ -24,6 +24,7 @@ public class Client implements Runnable
 	dp_out.setPort(port);
     }
 
+	/* Envoi des messages au serveur... */
     public void send(String s) throws Exception
     {
 	dp_out.setData(s.getBytes());
@@ -33,6 +34,7 @@ public class Client implements Runnable
 	System.out.println("OK");
     }
 
+	/* Ecoute le serveur pour recevoir un message */
     public String receive(DatagramSocket s) throws Exception
     {
 	dp_in.setData(new byte[1024]);
@@ -56,6 +58,7 @@ public class Client implements Runnable
 	    }
     }
 
+	/* Gere la reception des messages du serveur */
     public void chat() throws Exception
     {
 	new Thread(this).start();
@@ -65,6 +68,7 @@ public class Client implements Runnable
 	    }
     }
 
+	/*	Lecture des messages sur le terminal */
     public String readString() throws Exception
     {
 	Scanner	sc;
